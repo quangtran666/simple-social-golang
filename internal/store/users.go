@@ -13,15 +13,18 @@ type User struct {
 	CreatedAt string `json:"created_at"`
 }
 
-type UsersStore struct {
+type UserStore struct {
 	db *sql.DB
 }
 
-func (s *UsersStore) Create(ctx context.Context, user *User) error {
+func (s *UserStore) Create(ctx context.Context, user *User) error {
 	query := `
 			INSERT INTO users (username, email, password)
 			VALUES ($1, $2, $3) RETURNING id, created_at
 			`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 
 	if err := s.db.QueryRowContext(
 		ctx,
@@ -31,7 +34,7 @@ func (s *UsersStore) Create(ctx context.Context, user *User) error {
 		user.Password,
 	).Scan(
 		&user.ID,
-		user.CreatedAt); err != nil {
+		&user.CreatedAt); err != nil {
 		return err
 	}
 

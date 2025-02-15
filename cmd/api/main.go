@@ -8,6 +8,8 @@ import (
 	"log"
 )
 
+const version = "0.0.1"
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file, error: %v", err)
