@@ -35,10 +35,6 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type FollowUser struct {
-	UserID int64 `json:"user_id"`
-}
-
 // FollowUser godoc
 //
 //	@Summary		Follow a user
@@ -46,21 +42,20 @@ type FollowUser struct {
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Param			userID	path		int	true	"User ID"
-//	@Success		204		{string}	string "User followed"
-//	@Failure		400		{object}	error "User not found"
+//	@Param			userID	path		int		true	"User ID"
+//	@Success		204		{string}	string	"User followed"
+//	@Failure		400		{object}	error	"User not found"
 //	@Security		ApiKeyAuth
 //	@Router			/users/{userID}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
-	followUser := getUserFromContext(r.Context())
-
-	var payload FollowUser
-	if err := ReadJSON(w, r, &payload); err != nil {
+	followerUser := getUserFromContext(r.Context())
+	followedId, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	if err := app.store.Followers.Follow(r.Context(), followUser.ID, payload.UserID); err != nil {
+	if err := app.store.Followers.Follow(r.Context(), followerUser.ID, followedId); err != nil {
 		switch {
 		case errors.Is(err, store.ErrConflict):
 			app.conflictResponse(w, r, err)
@@ -77,15 +72,15 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
-	unfollowedUser := getUserFromContext(r.Context())
+	followerUser := getUserFromContext(r.Context())
 
-	var payload FollowUser
-	if err := ReadJSON(w, r, &payload); err != nil {
+	unfollowedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	if err := app.store.Followers.UnFollow(r.Context(), unfollowedUser.ID, payload.UserID); err != nil {
+	if err := app.store.Followers.UnFollow(r.Context(), followerUser.ID, unfollowedID); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

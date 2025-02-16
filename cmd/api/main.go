@@ -2,6 +2,7 @@
 
 import (
 	"github.com/joho/godotenv"
+	"github.com/quangtran666/simple-social-golang/internal/auth"
 	"github.com/quangtran666/simple-social-golang/internal/db"
 	"github.com/quangtran666/simple-social-golang/internal/env"
 	"github.com/quangtran666/simple-social-golang/internal/mailer"
@@ -53,6 +54,16 @@ func main() {
 				password:  env.GetString("MAIL_PASSWORD", "test"),
 			},
 		},
+		auth: authConfig{
+			basic: BasicConfig{
+				username: env.GetString("BASIC_AUTH_USERNAME", "admin"),
+				password: env.GetString("BASIC_AUTH_PASSWORD", "123456"),
+			},
+			token: TokenConfig{
+				secret: env.GetString("JWT_SECRET", "example"),
+				expiry: time.Hour * 24 * 3,
+			},
+		},
 	}
 
 	// Logger
@@ -70,11 +81,14 @@ func main() {
 
 	mailer := mailer.NewMailtrapMailer(cfg.mail.mailtrap.fromEmail, cfg.mail.mailtrap.username, cfg.mail.mailtrap.password)
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, "simple-social", "simple-social")
+
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailer,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailer,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()
