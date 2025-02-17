@@ -8,6 +8,7 @@ import (
 	"github.com/quangtran666/simple-social-golang/internal/auth"
 	"github.com/quangtran666/simple-social-golang/internal/mailer"
 	"github.com/quangtran666/simple-social-golang/internal/store"
+	"github.com/quangtran666/simple-social-golang/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 	"net/http"
@@ -17,18 +18,27 @@ import (
 type application struct {
 	config        config
 	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
 }
 
 type config struct {
-	addr   string
-	db     dbConfig
-	env    string
-	apiURL string
-	mail   mailConfig
-	auth   authConfig
+	addr     string
+	db       dbConfig
+	env      string
+	apiURL   string
+	mail     mailConfig
+	auth     authConfig
+	redisCfg redisConfig
+}
+
+type redisConfig struct {
+	addr    string
+	db      int
+	pw      string
+	enabled bool
 }
 
 type authConfig struct {
